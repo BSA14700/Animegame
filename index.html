@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Anime Bricks Breaker Quest</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #050510;
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 500px; /* Mobile width constraint */
+            height: 100%;
+            position: relative;
+            background: #0a0a1a;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-left: 1px solid #222;
+            border-right: 1px solid #222;
+        }
+
+        /* --- TOP BAR --- */
+        .ui-header {
+            height: 90px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            z-index: 10;
+        }
+
+        .header-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .icon-btn {
+            font-size: 24px;
+            color: #00aaff;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .icon-btn:active { transform: scale(0.9); }
+
+        .score-container {
+            text-align: center;
+        }
+        .level-text {
+            font-size: 14px;
+            color: #00aaff;
+            margin-bottom: 2px;
+        }
+        .level-progress {
+            width: 120px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        .progress-bar {
+            width: 75%; /* Placeholder */
+            height: 100%;
+            background: #ffa500;
+        }
+        .score-val {
+            font-size: 28px;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        /* --- CANVAS --- */
+        .canvas-container {
+            flex-grow: 1;
+            position: relative;
+            background-color: #080814;
+            /* Grid Pattern */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            touch-action: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Avatar Floating */
+        .anime-mascot {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.8;
+            transition: transform 0.3s;
+        }
+        .anime-mascot img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #00aaff;
+            object-fit: cover;
+        }
+        .bubble {
+            position: absolute;
+            bottom: 85px;
+            right: 10px;
+            background: white;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .bubble.show { opacity: 1; }
+
+        /* --- BOTTOM BAR --- */
+        .bottom-bar {
+            height: 100px;
+            background: #0a0a1a;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #222;
+            padding-bottom: 10px;
+        }
+
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #00aaff;
+            background: transparent;
+            color: #00aaff;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .action-btn:active { background: rgba(0, 170, 255, 0.2); }
+
+        .recall-btn {
+            border-color: #ff007f;
+            color: #ff007f;
+            width: 70px;
+            height: 70px;
+            font-size: 30px;
+        }
+
+        .ball-count-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ffa500;
+            color: black;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* --- OVERLAYS --- */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            backdrop-filter: blur(5px);
+        }
+        .hidden { display: none !important; }
+        
+        .overlay-content {
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        h1 { font-size: 36px; color: #ff007f; margin-bottom: 10px; text-shadow: 0 0 20px #ff007f; }
+        
+        .play-btn {
+            background: linear-gradient(45deg, #ff007f, #ff5500);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 24px;
+            border-radius: 50px;
+            font-family: 'Fredoka One', cursive;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255, 0, 127, 0.4);
+            transition: transform 0.2s;
+        }
+        .play-btn:active { transform: scale(0.95); }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-wrapper">
+        
+        <!-- Header -->
+        <div class="ui-header">
+            <div class="header-item">
+                <i class="fa-solid fa-gift icon-btn"></i>
+            </div>
+            
+            <div class="score-container">
+                <div class="level-text">LV <span id="level-display">1</span></div>
+                <div class="level-progress"><div class="progress-bar"></div></div>
+                <div class="score-val" id="score-display">0</div>
+            </div>
+
+            <div class="header-item">
+                <i class="fa-solid fa-pause icon-btn"></i>
+            </div>
+        </div>
+
+        <!-- Canvas Game Area -->
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- Anime Mascot -->
+            <div class="anime-mascot">
+                <div class="bubble" id="mascot-bubble">Ara Ara~</div>
+                <img src="https://via.placeholder.com/100x100/ff007f/ffffff?text=Waifu" alt="Mascot">
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="bottom-bar">
+            <div class="action-btn" id="undo-btn">
+                <i class="fa-solid fa-rotate-left"></i>
+            </div>
+            
+            <div class="action-btn recall-btn" id="recall-btn">
+                <i class="fa-solid fa-angles-down"></i>
+                <div class="ball-count-badge" id="ball-count-ui">x1</div>
+            </div>
+
+            <div class="action-btn">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+        </div>
+
+        <!-- Start/Game Over Overlay -->
+        <div id="overlay">
+            <div class="overlay-content">
+                <h1 id="overlay-title">Ready?</h1>
+                <p style="color:#aaa; margin-bottom: 20px;">Drag to Aim & Shoot</p>
+                <button class="play-btn" id="start-btn">PLAY</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO FILES (Preloaded) -->
+    <!-- Note: Browsers require user interaction to play audio first time -->
+    <audio id="sfx-hit" src="strongpunch.mp3" preload="auto"></audio>
+    <audio id="sfx-anime" src="anime-ahh.mp3" preload="auto"></audio>
+
+    <script>
+        /** * ANIME BRICKS BREAKER REMASTERED
+         * Style: Neon/Dark
+         * Features: Triangles, Physics, Audio
+         */
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        
+        // UI Refs
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level-display');
+        const ballCountUI = document.getElementById('ball-count-ui');
+        const overlay = document.getElementById('overlay');
+        const overlayTitle = document.getElementById('overlay-title');
+        const startBtn = document.getElementById('start-btn');
+        const recallBtn = document.getElementById('recall-btn');
+        const mascotBubble = document.getElementById('mascot-bubble');
+        
+        // Audio Refs
+        const sfxHit = document.getElementById('sfx-hit');
+        const sfxAnime = document.getElementById('sfx-anime');
+        sfxHit.volume = 0.4;
+        sfxAnime.volume = 0.6;
+
+        let lastHitTime = 0;
+
+        function playHitSound() {
+            const now = Date.now();
+            if (now - lastHitTime > 50) { // Debounce sound (max 20 hits per sec)
+                // Clone node to allow overlapping sounds
+                const sound = sfxHit.cloneNode();
+                sound.volume = 0.3;
+                sound.play().catch(e => {}); // Catch play promise errors
+                lastHitTime = now;
+            }
+        }
+
+        function playAnimeSound() {
+            sfxAnime.currentTime = 0;
+            sfxAnime.play().catch(e => {});
+        }
+
+        // --- GAME CONFIG ---
+        const COLS = 6;
+        const ROWS = 9; // Visible rows
+        const BALL_RADIUS = 5;
+        const BALL_SPEED = 12;
+        let TILE_SIZE = 0;
+        let BRICK_PADDING = 3;
+
+        // Colors
+        const COLORS = {
+            bg: '#080814',
+            ball: '#ffffff',
+            aim: '#00aaff',
+            bricks: [
+                { border: '#ff3333', fill: 'rgba(255, 51, 51, 0.2)' }, // Red
+                { border: '#ffaa00', fill: 'rgba(255, 170, 0, 0.2)' }, // Orange
+                { border: '#ffff00', fill: 'rgba(255, 255, 0, 0.2)' }, // Yellow
+                { border: '#33ff33', fill: 'rgba(51, 255, 51, 0.2)' }, // Green
+                { border: '#00ccff', fill: 'rgba(0, 204, 255, 0.2)' }, // Blue
+                { border: '#cc33ff', fill: 'rgba(204, 51, 255, 0.2)' }  // Purple
+            ]
+        };
+
+        // State
+        let state = {
+            mode: 'IDLE', // IDLE, AIMING, SHOOTING, RECALLING, GAMEOVER
+            balls: [],
+            bricks: [],
+            items: [],
+            particles: [],
+            launchX: 0,
+            launchY: 0,
+            aimAngle: -Math.PI/2,
+            score: 0,
+            level: 1,
+            ballCount: 1,
+            ballsToShoot: 0
+        };
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            TILE_SIZE = canvas.width / COLS;
+            state.launchY = canvas.height - BALL_RADIUS - 10;
+            if(state.mode === 'IDLE' && state.launchX === 0) {
+                state.launchX = canvas.width / 2;
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        // --- INPUT ---
+        let isDragging = false;
+        
+        const inputStart = (x, y) => {
+            if (state.mode !== 'IDLE' && state.mode !== 'AIMING') return;
+            isDragging = true;
+            state.mode = 'AIMING';
+        };
+        
+        const inputMove = (x, y) => {
+            if (!isDragging) return;
+            
+            // Vector from Launch Pad to Finger
+            const dx = x - state.launchX;
+            const dy = y - state.launchY;
+            
+            // We want aiming to be intuitive: drag down-left to shoot up-right?
+            // Or drag in direction of shot? Screenshot implies "Pull Back" or "Direct Point"
+            // Let's go with "Direct Point" but clamp to upper half
+            
+            let angle = Math.atan2(dy, dx);
+            
+            // Clamp aiming to ensure we don't shoot into the floor
+            // Allow -170 deg to -10 deg
+            if (angle > 0) angle = -Math.PI/2; // If dragging below, snap to up
+            if (angle > -0.1) angle = -0.1;
+            if (angle < -Math.PI + 0.1) angle = -Math.PI + 0.1;
+
+            state.aimAngle = angle;
+        };
+
+        const inputEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            shoot();
+        };
+
+        // Mouse
+        canvas.addEventListener('mousedown', e => inputStart(e.offsetX, e.offsetY));
+        canvas.addEventListener('mousemove', e => inputMove(e.offsetX, e.offsetY));
+        window.addEventListener('mouseup', inputEnd);
+
+        // Touch
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            inputStart(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+        }, {passive:false});
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            inputMove(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+        }, {passive:false});
+        window.addEventListener('touchend', inputEnd);
+
+        // Recall Button
+        recallBtn.addEventListener('click', () => {
+            if (state.mode === 'SHOOTING') {
+                recallBalls();
+            }
+        });
+
+        // --- LOGIC ---
+
+        function initGame() {
+            resize();
+            state.score = 0;
+            state.level = 1;
+            state.ballCount = 1;
+            state.bricks = [];
+            state.items = [];
+            state.balls = [];
+            state.particles = [];
+            state.launchX = canvas.width/2;
+            state.mode = 'IDLE';
+            
+            scoreDisplay.innerText = 0;
+            levelDisplay.innerText = 1;
+            ballCountUI.innerText = 'x1';
+            
+            overlay.classList.add('hidden');
+            
+            spawnRow();
+            spawnRow();
+            spawnRow();
+            
+            playAnimeSound();
+            loop();
+        }
+
+        function spawnRow() {
+            // Shift down
+            state.bricks.forEach(b => b.row++);
+            state.items.forEach(i => i.row++);
+            
+            // Check Game Over
+            if(state.bricks.some(b => b.row >= ROWS-1)) {
+                gameOver();
+                return;
+            }
+
+            // Create new
+            for(let c=0; c<COLS; c++) {
+                // 40% chance of brick
+                if(Math.random() < 0.4) {
+                    const hp = state.level;
+                    // Shape: 0=Square, 1=TriangleBL, 2=TriangleBR, 3=TriangleTL, 4=TriangleTR
+                    // Simpler: 0=Square, 1=Triangle (Random rotation)
+                    let shape = (Math.random() > 0.8) ? (1 + Math.floor(Math.random()*4)) : 0;
+                    
+                    state.bricks.push({
+                        col: c, row: 0,
+                        hp: hp,
+                        maxHp: hp,
+                        shape: shape,
+                        colorIdx: Math.floor(Math.random() * COLORS.bricks.length)
+                    });
+                } else if (Math.random() < 0.1 && !state.items.some(i => i.row === 0)) {
+                    // Item (+1 Ball)
+                    state.items.push({
+                        col: c, row: 0, type: 'ball'
+                    });
+                }
+            }
+            state.level++;
+            levelDisplay.innerText = state.level;
+        }
+
+        function shoot() {
+            state.mode = 'SHOOTING';
+            state.ballsToShoot = state.ballCount;
+            let shotCount = 0;
+            state.nextLaunchX = null;
+
+            const interval = setInterval(() => {
+                if(state.mode !== 'SHOOTING') { clearInterval(interval); return; }
+                
+                state.balls.push({
+                    x: state.launchX,
+                    y: state.launchY,
+                    dx: Math.cos(state.aimAngle) * BALL_SPEED,
+                    dy: Math.sin(state.aimAngle) * BALL_SPEED,
+                    active: true
+                });
+                
+                shotCount++;
+                ballCountUI.innerText = 'x' + (state.ballCount - shotCount);
+                
+                if(shotCount >= state.ballsToShoot) {
+                    clearInterval(interval);
+                    ballCountUI.innerText = 'x0';
+                }
+            }, 100);
+        }
+
+        function recallBalls() {
+            state.mode = 'RECALLING';
+            state.balls.forEach(b => {
+                if(!b.active) return;
+                // Set vector towards launch pad
+                // For simplicity in this demo, just disable them instantly and end turn
+                b.active = false;
+            });
+            // End turn logic handles in update
+        }
+
+        function spawnParticles(x, y, color) {
+            for(let i=0; i<4; i++) {
+                state.particles.push({
+                    x: x, y: y,
+                    dx: (Math.random()-0.5)*8,
+                    dy: (Math.random()-0.5)*8,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function showBubble(text) {
+            mascotBubble.innerText = text;
+            mascotBubble.classList.add('show');
+            setTimeout(() => mascotBubble.classList.remove('show'), 1500);
+        }
+
+        function update() {
+            if(state.mode === 'GAMEOVER') return;
+
+            // Particles
+            for(let i=state.particles.length-1; i>=0; i--) {
+                let p = state.particles[i];
+                p.x += p.dx;
+                p.y += p.dy;
+                p.life -= 0.08;
+                if(p.life <= 0) state.particles.splice(i,1);
+            }
+
+            // Balls
+            let activeCount = 0;
+            state.balls.forEach(b => {
+                if(!b.active) return;
+                activeCount++;
+
+                // Physics sub-steps for speed
+                const steps = 2;
+                for(let s=0; s<steps; s++) {
+                    let nextX = b.x + b.dx/steps;
+                    let nextY = b.y + b.dy/steps;
+                    let hit = false;
+
+                    // Walls
+                    if(nextX < BALL_RADIUS || nextX > canvas.width - BALL_RADIUS) {
+                        b.dx = -b.dx;
+                        nextX = b.x; // clamp
+                    }
+                    if(nextY < BALL_RADIUS) {
+                        b.dy = -b.dy;
+                        nextY = b.y;
+                    }
+                    // Floor
+                    if(nextY > state.launchY + 5) {
+                        b.active = false;
+                        if(state.nextLaunchX == null) {
+                            state.nextLaunchX = Math.max(BALL_RADIUS, Math.min(canvas.width-BALL_RADIUS, nextX));
+                        }
+                        return; // Stop processing this ball
+                    }
+
+                    // Bricks Collision
+                    // Optimization: grid-based lookup would be better, but loop is fine for <100 bricks
+                    for(let i=state.bricks.length-1; i>=0; i--) {
+                        let br = state.bricks[i];
+                        let bx = br.col * TILE_SIZE + BRICK_PADDING;
+                        let by = br.row * TILE_SIZE + BRICK_PADDING + 80; // offset
+                        let size = TILE_SIZE - BRICK_PADDING*2;
+
+                        // AABB for broad phase
+                        if(nextX > bx - BALL_RADIUS && nextX < bx + size + BALL_RADIUS &&
+                           nextY > by - BALL_RADIUS && nextY < by + size + BALL_RADIUS) {
+                            
+                            // Hit detected (simplified for triangles to AABB for stability)
+                            // Refine normal based on previous pos
+                            let prevX = b.x;
+                            let prevY = b.y;
+                            
+                            // Determine hit side
+                            if (prevY < by || prevY > by + size) b.dy = -b.dy;
+                            else b.dx = -b.dx;
+
+                            br.hp--;
+                            state.score++;
+                            playHitSound();
+                            spawnParticles(nextX, nextY, COLORS.bricks[br.colorIdx].border);
+
+                            if(br.hp <= 0) {
+                                state.bricks.splice(i, 1);
+                                if(Math.random() > 0.95) {
+                                    showBubble("Sugoi!");
+                                    playAnimeSound();
+                                }
+                            }
+                            hit = true;
+                            break; // One hit per step
+                        }
+                    }
+                    
+                    if(!hit) {
+                        // Items
+                        for(let i=state.items.length-1; i>=0; i--) {
+                            let it = state.items[i];
+                            let ix = it.col * TILE_SIZE + TILE_SIZE/2;
+                            let iy = it.row * TILE_SIZE + TILE_SIZE/2 + 80;
+                            let dist = Math.hypot(nextX-ix, nextY-iy);
+                            if(dist < BALL_RADIUS + 10) {
+                                state.ballCount++;
+                                state.items.splice(i, 1);
+                                showBubble("Power Up!");
+                            }
+                        }
+                    }
+
+                    b.x += b.dx/steps;
+                    b.y += b.dy/steps;
+                    if(hit) break; // Break sub-steps on hit
+                }
+            });
+
+            // Turn End Logic
+            if(state.mode === 'SHOOTING' && activeCount === 0 && state.balls.length === state.ballsToShoot) {
+                endTurn();
+            } else if (state.mode === 'RECALLING' && activeCount === 0) {
+                endTurn();
+            }
+        }
+
+        function endTurn() {
+            state.mode = 'IDLE';
+            if(state.nextLaunchX != null) state.launchX = state.nextLaunchX;
+            state.balls = [];
+            ballCountUI.innerText = 'x' + state.ballCount;
+            scoreDisplay.innerText = state.score;
+            
+            spawnRow();
+        }
+
+        function gameOver() {
+            state.mode = 'GAMEOVER';
+            overlayTitle.innerText = "GAME OVER";
+            startBtn.innerText = "TRY AGAIN";
+            overlay.classList.remove('hidden');
+            showBubble("Baka...");
+            playAnimeSound();
+        }
+
+        // --- DRAW ---
+
+        function drawTriangle(ctx, x, y, size, type, fill, stroke) {
+            ctx.beginPath();
+            ctx.fillStyle = fill;
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 2;
+            
+            if (type === 1) { // BL
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y + size);
+                ctx.lineTo(x + size, y + size);
+            } else if (type === 2) { // BR
+                ctx.moveTo(x, y + size);
+                ctx.lineTo(x + size, y + size);
+                ctx.lineTo(x + size, y);
+            } else if (type === 3) { // TL
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y + size);
+                ctx.lineTo(x + size, y);
+            } else { // TR
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + size, y);
+                ctx.lineTo(x + size, y + size);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function draw() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            // Draw Aim Line
+            if(state.mode === 'AIMING') {
+                ctx.beginPath();
+                ctx.moveTo(state.launchX, state.launchY);
+                const aimX = state.launchX + Math.cos(state.aimAngle) * 800;
+                const aimY = state.launchY + Math.sin(state.aimAngle) * 800;
+                ctx.lineTo(aimX, aimY);
+                
+                // Dotted Line Style
+                ctx.strokeStyle = COLORS.aim;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 10]); // Dots
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // End Dot
+                ctx.beginPath();
+                ctx.arc(state.launchX + Math.cos(state.aimAngle)*50, state.launchY + Math.sin(state.aimAngle)*50, 4, 0, Math.PI*2);
+                ctx.fillStyle = COLORS.aim;
+                ctx.fill();
+            }
+
+            // Draw Bricks
+            state.bricks.forEach(b => {
+                let bx = b.col * TILE_SIZE + BRICK_PADDING;
+                let by = b.row * TILE_SIZE + BRICK_PADDING + 80;
+                let size = TILE_SIZE - BRICK_PADDING*2;
+                let c = COLORS.bricks[b.colorIdx];
+
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = c.border;
+
+                if(b.shape === 0) {
+                    // Square
+                    ctx.fillStyle = c.fill;
+                    ctx.strokeStyle = c.border;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.roundRect(bx, by, size, size, 5);
+                    ctx.fill();
+                    ctx.stroke();
+                } else {
+                    // Triangle
+                    drawTriangle(ctx, bx, by, size, b.shape, c.fill, c.border);
+                }
+
+                // Text
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Fredoka One';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // Adjust text pos for triangles roughly
+                let tx = bx + size/2;
+                let ty = by + size/2;
+                if(b.shape === 1) { tx -= 5; ty += 5; }
+                if(b.shape === 4) { tx += 5; ty -= 5; }
+
+                ctx.fillText(b.hp, tx, ty);
+            });
+
+            // Draw Items
+            state.items.forEach(i => {
+                let ix = i.col * TILE_SIZE + TILE_SIZE/2;
+                let iy = i.row * TILE_SIZE + TILE_SIZE/2 + 80;
+                
+                // Ring
+                ctx.beginPath();
+                ctx.arc(ix, iy, 12, 0, Math.PI*2);
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Inner green ball
+                ctx.beginPath();
+                ctx.arc(ix, iy, 6, 0, Math.PI*2);
+                ctx.fillStyle = '#00ff00';
+                ctx.fill();
+                
+                // Plus text
+                ctx.fillStyle = '#003300';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText('+', ix, iy+1);
+            });
+
+            // Draw Balls
+            if(state.mode === 'IDLE' || state.mode === 'AIMING') {
+                ctx.beginPath();
+                ctx.arc(state.launchX, state.launchY, BALL_RADIUS+2, 0, Math.PI*2);
+                ctx.fillStyle = COLORS.ball;
+                ctx.shadowColor = COLORS.ball;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            state.balls.forEach(b => {
+                if(!b.active) return;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, BALL_RADIUS, 0, Math.PI*2);
+                ctx.fillStyle = COLORS.ball;
+                ctx.fill();
+            });
+
+            // Particles
+            state.particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+
+            requestAnimationFrame(loop);
+        }
+
+        function loop() {
+            update();
+            draw();
+        }
+
+        // Init
+        startBtn.addEventListener('click', initGame);
+        // Pre-draw bg
+        ctx.fillStyle = "#080814";
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+        resize();
+
+    </script>
+</body>
+</html>
