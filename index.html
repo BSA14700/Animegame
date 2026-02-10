@@ -232,19 +232,19 @@
             <h1>Waifu<br>Breaker</h1>
             <p style="color:#aaa; font-size:14px; margin-bottom:15px;">SELECT YOUR PARTNER</p>
             <div class="char-grid">
-                <!-- Yandere Selection -->
+                <!-- Yandere Selection (Updated Image Path) -->
                 <div class="char-card" onclick="selectChar('yandere', this)">
-                    <img src="akari.jpg" alt="Akari">
+                    <img src="assets/akari_neutral.jpg" alt="Akari">
                     <div class="char-info"><div class="char-name">Akari</div></div>
                 </div>
-                <!-- Tsundere Selection -->
+                <!-- Tsundere Selection (Updated Image Path) -->
                 <div class="char-card selected" onclick="selectChar('tsundere', this)">
-                    <img src="rin.jpg" alt="Rin">
+                    <img src="assets/rin_neutral.jpg" alt="Rin">
                     <div class="char-info"><div class="char-name">Rin</div></div>
                 </div>
-                <!-- Child Selection -->
+                <!-- Child Selection (Updated Image Path) -->
                 <div class="char-card" onclick="selectChar('child', this)">
-                    <img src="hana.jpg" alt="Hana">
+                    <img src="assets/hana_neutral.jpg" alt="Hana">
                     <div class="char-info"><div class="char-name">Hana</div></div>
                 </div>
             </div>
@@ -280,7 +280,7 @@
 
     <script>
         /* =========================================
-           ASSETS CONFIGURATION (EXPANDED FOR EXPRESSIONS)
+           ASSETS CONFIGURATION (UPDATED FOR ASSETS FOLDER)
            ========================================= */
         const ASSETS = {
             yandere: {
@@ -288,11 +288,10 @@
                 color: "#ff003c", 
                 fallback_emoji: "😈",
                 expressions: {
-                    // Update these filenames once you generate new images
-                    neutral: "akari.jpg", 
-                    win: "akari.jpg",    // e.g. "akari_win.jpg"
-                    lose: "akari.jpg",   // e.g. "akari_lose.jpg"
-                    action: "akari.jpg"  // e.g. "akari_action.jpg"
+                    neutral: "assets/akari_neutral.jpg", 
+                    win: "assets/akari_win.jpg",    
+                    lose: "assets/akari_lose.jpg",   
+                    action: "assets/akari_action.jpg"  
                 },
                 lines: {
                     start: ["Level {L}? Easy for us.", "Don't let them touch me."],
@@ -307,10 +306,10 @@
                 color: "#ff9100", 
                 fallback_emoji: "😒",
                 expressions: {
-                    neutral: "rin.jpg", 
-                    win: "rin.jpg", 
-                    lose: "rin.jpg", 
-                    action: "rin.jpg" 
+                    neutral: "assets/rin_neutral.jpg", 
+                    win: "assets/rin_win.jpg", 
+                    lose: "assets/rin_lose.jpg", 
+                    action: "assets/rin_action.jpg" 
                 },
                 lines: {
                     start: ["Level {L}... try not to mess up.", "I'm ready, I guess."],
@@ -325,10 +324,10 @@
                 color: "#00ffaa", 
                 fallback_emoji: "✨",
                 expressions: {
-                    neutral: "hana.jpg", 
-                    win: "hana.jpg", 
-                    lose: "hana.jpg", 
-                    action: "hana.jpg" 
+                    neutral: "assets/hana_neutral.jpg", 
+                    win: "assets/hana_win.jpg", 
+                    lose: "assets/hana_lose.jpg", 
+                    action: "assets/hana_action.jpg" 
                 },
                 lines: {
                     start: ["Level {L}! Let's go!", "Hana will help!"],
@@ -748,4 +747,4 @@
 
     </script>
 </body>
-</html>
+</html>       
